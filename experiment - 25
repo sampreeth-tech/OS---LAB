@@ -1,0 +1,79 @@
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+
+int main() {
+    int choice, fd;
+    char filename[50], data[100];
+    char buffer[200];
+    ssize_t n;
+
+    while (1) {
+        printf("\n--- UNIX File Management ---\n");
+        printf("1. Create File\n2. Write to File\n3. Read File\n4. Delete File\n5. Exit\nEnter choice: ");
+        scanf("%d", &choice);
+        getchar(); // consume newline
+
+        switch (choice) {
+            case 1:
+                printf("Enter filename to create: ");
+                scanf("%s", filename);
+                fd = open(filename, O_CREAT | O_WRONLY, 0644);
+                if (fd == -1) perror("Error creating file");
+                else {
+                    printf("File %s created successfully.\n", filename);
+                    close(fd);
+                }
+                break;
+
+            case 2:
+                printf("Enter filename to write: ");
+                scanf("%s", filename);
+                getchar();
+                printf("Enter data to write: ");
+                fgets(data, sizeof(data), stdin);
+                fd = open(filename, O_WRONLY | O_APPEND);
+                if (fd == -1) perror("Error opening file");
+                else {
+                    write(fd, data, strlen(data));
+                    printf("Data written to file successfully.\n");
+                    close(fd);
+                }
+                break;
+
+            case 3:
+                printf("Enter filename to read: ");
+                scanf("%s", filename);
+                fd = open(filename, O_RDONLY);
+                if (fd == -1) perror("Error opening file");
+                else {
+                    n = read(fd, buffer, sizeof(buffer)-1);
+                    if (n >= 0) {
+                        buffer[n] = '\0';
+                        printf("File content:\n%s\n", buffer);
+                    }
+                    close(fd);
+                }
+                break;
+
+            case 4:
+                printf("Enter filename to delete: ");
+                scanf("%s", filename);
+                if (unlink(filename) == 0)
+                    printf("File %s deleted successfully.\n", filename);
+                else
+                    perror("Error deleting file");
+                break;
+
+            case 5:
+                exit(0);
+
+            default:
+                printf("Invalid choice! Try again.\n");
+        }
+    }
+
+    return 0;
+}
