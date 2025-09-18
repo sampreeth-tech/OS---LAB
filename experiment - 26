@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <string.h>
+
+int main() {
+    int choice, fd;
+    char filename[100], buffer[200];
+    struct stat st;
+
+    while (1) {
+        printf("\n--- UNIX I/O System Calls Demo ---\n");
+        printf("1. fcntl (Duplicate File Descriptor)\n");
+        printf("2. lseek (File Offset Repositioning)\n");
+        printf("3. stat (File Information)\n");
+        printf("4. opendir & readdir (List Directory)\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: // fcntl
+                printf("Enter filename: ");
+                scanf("%s", filename);
+                fd = open(filename, O_RDONLY);
+                if (fd < 0) {
+                    perror("open");
+                    break;
+                }
+                int newfd = fcntl(fd, F_DUPFD, 0); // duplicate fd
+                if (newfd < 0) perror("fcntl");
+                else
+                    printf("Original FD: %d, Duplicated FD: %d\n", fd, newfd);
+                close(fd);
+                close(newfd);
+                break;
+
+            case 2: // lseek
+                printf("Enter filename: ");
+                scanf("%s", filename);
+                fd = open(filename, O_RDONLY);
+                if (fd < 0) {
+                    perror("open");
+                    break;
+                }
+                lseek(fd, 0, SEEK_END); // move to end
+                off_t size = lseek(fd, 0, SEEK_CUR);
+                printf("File size using lseek: %ld bytes\n", size);
+                close(fd);
+                break;
+
+            case 3: // stat
+                printf("Enter filename: ");
+                scanf("%s", filename);
+                if (stat(filename, &st) == 0) {
+                    printf("File: %s\n", filename);
+                    printf("Size: %ld bytes\n", st.st_size);
+                    printf("Inode: %ld\n", st.st_ino);
+                    printf("Permissions: %o\n", st.st_mode & 0777);
+                } else {
+                    perror("stat");
+                }
+                break;
+
+            case 4: // opendir & readdir
+                printf("Enter directory name: ");
+                scanf("%s", filename);
+                DIR *dir = opendir(filename);
+                if (dir == NULL) {
+                    perror("opendir");
+                    break;
+                }
+                struct dirent *entry;
+                printf("Contents of directory %s:\n", filename);
+                while ((entry = readdir(dir)) != NULL) {
+                    printf("%s\n", entry->d_name);
+                }
+                closedir(dir);
+                break;
+
+            case 5:
+                exit(0);
+
+            default:
+                printf("Invalid choice! Try again.\n");
+        }
+    }
+    return 0;
+}
